@@ -65,7 +65,7 @@ Para que el modelo funcione en tu hardware, debes incluir los siguientes archivo
 
 Al cargar el modelo, puedes abrir el **Serial Plotter** (115200 baudios) para ver la precisión de la IA frente a la función matemática real.
 
-![Despliegue del modelo en ESP32](images\led_ml.gif)
+![Despliegue del modelo en ESP32](images/led_ml.gif)
 
 
 
