@@ -1,7 +1,7 @@
 
 # TinyWaveML: Inferencia de Onda Senoidal en ESP32
 
-Este proyecto es una guía práctica de **TinyML** que recorre todo el ciclo de vida de un modelo de Inteligencia Artificial: desde el entrenamiento de una red neuronal que aprende la función seno, hasta su despliegue físico en un microcontrolador ESP32 para controlar un LED mediante PWM.
+Este proyecto es una guía práctica de **TinyML** que recorre todo el ciclo de trabajo de un modelo de Inteligencia Artificial: desde el entrenamiento de una red neuronal que aprende la función seno, hasta su despliegue físico en un microcontrolador ESP32 para controlar un LED mediante PWM.
 
 ##  Cómo empezar
 
