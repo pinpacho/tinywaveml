@@ -89,7 +89,7 @@ Abre el **Ploter serie** (Herramientas > Ploter serie) a **115200 baudios**. Ver
 ### 4.2 Control de Hardware (PWM)
 La predicción se traduce a una señal PWM que varía el brillo del LED (Pin 2). El resultado es un desvanecimiento suave que sigue el ritmo de la onda senoidal.
 
-![Despliegue del modelo en ESP32](https://imgur.com/y9VBeUS.gif)
+![Despliegue del modelo en ESP32](../images/led_ml.gif)
 
 ---
 

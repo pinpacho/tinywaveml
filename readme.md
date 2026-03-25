@@ -10,7 +10,7 @@ Puedes ejecutar este proyecto de dos maneras:
 ### Opción A: Google Colab (Recomendado)
 Entrena y convierte el modelo en la nube sin instalar nada localmente:
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pinpacho/tinywaveml/blob/57856e213ac44a9e46a129be9ecb1a0a3863eb37/hello_wave.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pinpacho/tinywaveml/blob/main/hello_wave.ipynb)
 
 ### Opción B: Entorno Local (Python)
 Si prefieres trabajar localmente, sigue estos pasos para configurar tu entorno virtual:
@@ -65,7 +65,7 @@ Para que el modelo funcione en tu hardware, debes incluir los siguientes archivo
 
 Al cargar el modelo, puedes abrir el **Serial Plotter** (115200 baudios) para ver la precisión de la IA frente a la función matemática real.
 
-![Despliegue del modelo en ESP32](https://imgur.com/y9VBeUS.gif)
+![Despliegue del modelo en ESP32](images\led_ml.gif)
 
 
 
