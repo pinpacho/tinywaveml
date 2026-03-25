@@ -1,103 +1,131 @@
 #include <TensorFlowLite_ESP32.h>
-
-#include "tensorflow/lite/micro/all_ops_resolver.h"
-#include "tensorflow/lite/micro/micro_error_reporter.h"
-#include "tensorflow/lite/micro/micro_interpreter.h"
-#include "tensorflow/lite/schema/schema_generated.h"
-
-// 🔥 TU MODELO
 #include "model.h"
 
-// ---------------- CONFIG ----------------
-constexpr int kTensorArenaSize = 8 * 1024;
+// TFLite
+#include "tensorflow/lite/micro/all_ops_resolver.h"
+#include "tensorflow/lite/micro/micro_interpreter.h"
+#include "tensorflow/lite/micro/micro_error_reporter.h"
+#include "tensorflow/lite/schema/schema_generated.h"
+
+// =============================
+// PWM LED CONFIG
+// =============================
+#define LED_PIN 2        // LED integrado (puedes cambiar)
+#define PWM_CH 0
+#define PWM_FREQ 5000
+#define PWM_RES 8        // 0–255
+
+// =============================
+// Configuración memoria
+// =============================
+constexpr int kTensorArenaSize = 20 * 1024;
 uint8_t tensor_arena[kTensorArenaSize];
 
-constexpr int kInferencesPerCycle = 100;
-constexpr float kXrange = 2.0f * 3.1416f;
-
-// ---------------- VARIABLES ----------------
+// =============================
+// Objetos TFLite
+// =============================
+tflite::MicroInterpreter* interpreter;
+TfLiteTensor* input;
+TfLiteTensor* output;
 tflite::ErrorReporter* error_reporter = nullptr;
-const tflite::Model* model = nullptr;
-tflite::MicroInterpreter* interpreter = nullptr;
 
-TfLiteTensor* input = nullptr;
-TfLiteTensor* output = nullptr;
+// =============================
+// Variables
+// =============================
+float x = 0.0;
+const float step = 0.05;
 
-int inference_count = 0;
-
-// ---------------- OUTPUT HANDLER ----------------
-void HandleOutput(float x, float y) {
-  Serial.print("x: ");
-  Serial.print(x);
-  Serial.print(" -> y: ");
-  Serial.println(y);
-}
-
-// ---------------- SETUP ----------------
+// =============================
+// SETUP
+// =============================
 void setup() {
   Serial.begin(115200);
+  delay(2000);
 
-  // Error reporter
+  // PWM setup
+  ledcSetup(PWM_CH, PWM_FREQ, PWM_RES);
+  ledcAttachPin(LED_PIN, PWM_CH);
+
+  Serial.println("Inicializando modelo...");
+
+  const tflite::Model* model = tflite::GetModel(g_model);
+
+  if (model->version() != TFLITE_SCHEMA_VERSION) {
+    Serial.println("Modelo incompatible!");
+    while (1);
+  }
+
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
 
-  // Cargar modelo
-  model = tflite::GetModel(g_model);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
-    Serial.println("Modelo incompatible!");
-    return;
-  }
-
-  // Resolver ops
   static tflite::AllOpsResolver resolver;
 
-  // Interpreter
   static tflite::MicroInterpreter static_interpreter(
-      model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
+      model,
+      resolver,
+      tensor_arena,
+      kTensorArenaSize,
+      error_reporter
+  );
 
   interpreter = &static_interpreter;
 
-  // Reservar memoria
   if (interpreter->AllocateTensors() != kTfLiteOk) {
-    Serial.println("AllocateTensors() fallo");
-    return;
+    Serial.println("Fallo en AllocateTensors()");
+    while (1);
   }
 
-  // Tensores
   input = interpreter->input(0);
   output = interpreter->output(0);
 
-  Serial.println("Modelo listo!");
+  Serial.println("Sistema listo");
 }
 
-// ---------------- LOOP ----------------
+// =============================
+// LOOP
+// =============================
 void loop() {
 
-  // Generar entrada (tipo seno)
-  float position = (float)inference_count / kInferencesPerCycle;
-  float x = position * kXrange;
+  if (x > 2 * PI) {
+    x = 0;
+  }
 
-  // 🔥 CUANTIZACIÓN (IMPORTANTE si es INT8)
-  int8_t x_q = x / input->params.scale + input->params.zero_point;
-  input->data.int8[0] = x_q;
+  float y_pred = 0;
 
-  // Ejecutar modelo
+  // =============================
+  // INFERENCIA
+  // =============================
+  input->data.f[0] = x;
+
   if (interpreter->Invoke() != kTfLiteOk) {
-    Serial.println("Invoke fallo");
+    Serial.println("Error en inferencia");
     return;
   }
 
-  // Obtener salida
-  int8_t y_q = output->data.int8[0];
-  float y = (y_q - output->params.zero_point) * output->params.scale;
+  y_pred = output->data.f[0];
 
-  // Mostrar resultado
-  HandleOutput(x, y);
+  // =============================
+  // CONVERSIÓN A PWM
+  // =============================
+  float y_pwm = (y_pred + 1.0) * 0.5 * 255.0;
 
-  // Incrementar contador
-  inference_count++;
-  if (inference_count >= kInferencesPerCycle)
-    inference_count = 0;
+  // saturación por seguridad
+  if (y_pwm > 255) y_pwm = 255;
+  if (y_pwm < 0) y_pwm = 0;
 
-  delay(100);
+  int pwm_value = (int)y_pwm;
+
+  // aplicar al LED
+  ledcWrite(PWM_CH, pwm_value);
+  float y_real = sin(x);
+  // =============================
+  // DEBUG (opcional)
+  // =============================
+  Serial.print(y_real);
+  Serial.print(" ");
+  Serial.println(y_pred);
+
+  x += step;
+
+  delay(20);
 }
